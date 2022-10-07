@@ -1,0 +1,37 @@
+messages:
+  traker-received: "&d&lCOSMIC &8&l▶ &7You have received %amount%x Entity Trackers."
+  traker-given: "&d&lCOSMIC &8&l▶ &7You have given &d%amount%x Entity Tracker's &7to &d%player%&7."
+  already-exist: "&eStat traker already exist on this item."
+  invalid-item: "&cYou cannot apply stat traker to this item."
+
+# List of available entity types to track
+# https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
+# DO NOT MAKE DIFFERENT TRAKER ITEMS SHARE THE SAME 'TRAK-LORE'
+stat-trak-items:
+  ZOMBIE:
+    item-name: "&7[&b&lZOMBIE TRAKER &7]"
+    item-lore:
+      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&bZombies Killed: &f%amount%"
+  SKELETON:
+    item-name: "&7[&7&lSKELETON TRAKER &7]"
+    item-lore:
+      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&7Skeletons Killed: &f%amount%"
+  PLAYER:
+    item-name: "&7[&4&lPLAYER TRAKER &7]"
+    item-lore:
+      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&cPlayers Killed: &f%amount%"
