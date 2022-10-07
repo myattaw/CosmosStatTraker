@@ -7,11 +7,11 @@ messages:
 # List of available entity types to track
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
 # DO NOT MAKE DIFFERENT TRAKER ITEMS SHARE THE SAME 'TRAK-LORE'
-stat-trak-items:
+stat-trak-entities:
   ZOMBIE:
     item-name: "&7[&b&lZOMBIE TRAKER &7]"
     item-lore:
-      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - "&7Click this item on top of a sword or axe to start tracking stats."
       - ""
       - "&f&lValid Items:"
       - "&7- Diamond Sword"
@@ -20,7 +20,7 @@ stat-trak-items:
   SKELETON:
     item-name: "&7[&7&lSKELETON TRAKER &7]"
     item-lore:
-      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - "&7Click this item on top of a sword or axe to start tracking stats."
       - ""
       - "&f&lValid Items:"
       - "&7- Diamond Sword"
@@ -29,9 +29,25 @@ stat-trak-items:
   PLAYER:
     item-name: "&7[&4&lPLAYER TRAKER &7]"
     item-lore:
-      - "&7Click this item ontop of a sword or axe to start tracking stats."
+      - "&7Click this item on top of a sword or axe to start tracking stats."
       - ""
       - "&f&lValid Items:"
       - "&7- Diamond Sword"
       - "&7- Diamond Axe"
     trak-lore: "&cPlayers Killed: &f%amount%"
+
+stat-trak-blocks:
+  IRON_ORES:
+    item-name: "&7[&7&lSKELETON TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Pickaxe"
+    trak-lore: "&7Iron Ores Mined: &f%amount%"
+    types:
+      - IRON_ORE
+    items:
+      - DIAMOND_PICKAXE
+
+

@@ -6,8 +6,10 @@ import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.module.TerminableModule;
 import me.lucko.helper.text3.Text;
+import me.rages.stattraker.trackers.BlockTraker;
 import me.rages.stattraker.trackers.EntityTraker;
 import org.bukkit.Material;
+import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
@@ -22,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -32,16 +35,23 @@ import java.util.concurrent.ThreadLocalRandom;
 public class StatTrakManager implements TerminableModule {
 
     private Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
+    private Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
+
     private StatTrakPlugin plugin;
 
     public StatTrakManager(StatTrakPlugin plugin) {
         this.plugin = plugin;
-        for (String section : plugin.getConfig().getConfigurationSection("stat-trak-items").getKeys(false)) {
-            EntityType entityType = EntityType.valueOf(section);
-            if (entityType != null) {
-                entityTrakerMap.put(entityType.name(), EntityTraker.create(entityType, plugin));
-            }
-        }
+
+        plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
+                .stream().map(EntityType::valueOf)
+                .filter(Objects::nonNull)
+                .forEach(entityType -> entityTrakerMap.put(entityType.name(), EntityTraker.create(entityType, plugin)));
+
+
+        plugin.getConfig().getConfigurationSection("stat-trak-blocks").getKeys(false)
+                .stream().map(str -> BlockTraker.create(str, plugin))
+                .forEach(blockTraker -> blockTraker.getMaterials().forEach(material -> blockTrakerMap.put(material, blockTraker)));
+
     }
 
     @Override

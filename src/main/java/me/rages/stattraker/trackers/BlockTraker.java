@@ -5,50 +5,56 @@ import me.lucko.helper.text3.Text;
 import me.rages.stattraker.StatTrakPlugin;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
+import org.bukkit.Tag;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 /**
  * @author : Michael
- * @since : 8/7/2022, Sunday
+ * @since : 10/7/2022, Friday
  **/
-public class EntityTraker {
+public class BlockTraker {
 
     private ItemStack itemStack;
     private NamespacedKey itemKey;
     private String dataLore;
     private String prefixLore;
 
-    public EntityTraker(EntityType entityType, StatTrakPlugin plugin) {
+    private String key;
+
+    private HashSet<Material> materials = new HashSet<>();
+    private HashSet<Material> acceptableItems = new HashSet<>();
+    public BlockTraker(String key, StatTrakPlugin plugin) {
         ItemStackBuilder builder = ItemStackBuilder.of(Material.NAME_TAG)
-                .name(plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".item-name"))
-                .lore(plugin.getConfig().getStringList("stat-trak-entities." + entityType.name() + ".item-lore"))
-                .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, entityType.name()));
+                .name(plugin.getConfig().getString("stat-trak-tags." + key + ".item-name"))
+                .lore(plugin.getConfig().getStringList("stat-trak-tags." + key + ".item-lore"))
+                .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, key));
+
+        plugin.getConfig().getStringList("stat-trak-blocks." + key + ".types")
+                .stream().map(str -> Material.valueOf(str.toUpperCase()))
+                .filter(Objects::nonNull)
+                .forEach(material -> materials.add(material));
+
+        plugin.getConfig().getStringList("stat-trak-blocks." + key + ".items")
+                .stream().map(str -> Material.valueOf(str.toUpperCase()))
+                .filter(Objects::nonNull)
+                .forEach(material -> acceptableItems.add(material));
 
         this.itemStack = builder.build();
-        this.itemKey = new NamespacedKey(plugin, entityType.name());
-        this.dataLore = plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".trak-lore");
+        this.itemKey = new NamespacedKey(plugin, key);
+        this.dataLore = plugin.getConfig().getString("stat-trak-tags." + key + ".trak-lore");
         this.prefixLore = Text.colorize(dataLore.split("%amount%")[0]);
     }
 
-    public static EntityTraker create(EntityType entityType, StatTrakPlugin plugin) {
-        return new EntityTraker(entityType, plugin);
-    }
-
-    public ItemStack incrementPlayerLore(ItemStack itemStack, int amount) {
-        int total = itemStack.getItemMeta().getPersistentDataContainer().get(getItemKey(), PersistentDataType.INTEGER) + amount;
-        ItemStackBuilder builder = ItemStackBuilder.of(itemStack);
-        builder.transformMeta(meta -> meta.getPersistentDataContainer().set(getItemKey(), PersistentDataType.INTEGER, total));
-        List<String> oldItemLore = itemStack.getItemMeta().getLore();
-        builder.clearLore();
-        builder.unflag(ItemFlag.HIDE_ENCHANTS);
-        oldItemLore.stream().filter(currLore -> !currLore.startsWith(this.prefixLore)).forEach(builder::lore);
-        builder.lore(getDataLore().replace("%amount%", String.format("%,d", total)));
-        return builder.build();
+    public static BlockTraker create(String key, StatTrakPlugin plugin) {
+        return new BlockTraker(key, plugin);
     }
 
     public ItemStack incrementLore(ItemStack itemStack, int amount) {
@@ -68,6 +74,10 @@ public class EntityTraker {
         return builder.build();
     }
 
+    public HashSet<Material> getMaterials() {
+        return materials;
+    }
+
     public String getDataLore() {
         return dataLore;
     }
@@ -79,4 +89,5 @@ public class EntityTraker {
     public ItemStack getItemStack() {
         return itemStack;
     }
+
 }
