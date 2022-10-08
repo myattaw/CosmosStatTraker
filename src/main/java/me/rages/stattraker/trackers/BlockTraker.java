@@ -5,8 +5,6 @@ import me.lucko.helper.text3.Text;
 import me.rages.stattraker.StatTrakPlugin;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.Tag;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
@@ -14,27 +12,19 @@ import org.bukkit.persistence.PersistentDataType;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 
 /**
  * @author : Michael
  * @since : 10/7/2022, Friday
  **/
-public class BlockTraker {
-
-    private ItemStack itemStack;
-    private NamespacedKey itemKey;
-    private String dataLore;
-    private String prefixLore;
-
-    private String key;
+public class BlockTraker extends Traker {
 
     private HashSet<Material> materials = new HashSet<>();
-    private HashSet<Material> acceptableItems = new HashSet<>();
+
     public BlockTraker(String key, StatTrakPlugin plugin) {
         ItemStackBuilder builder = ItemStackBuilder.of(Material.NAME_TAG)
-                .name(plugin.getConfig().getString("stat-trak-tags." + key + ".item-name"))
-                .lore(plugin.getConfig().getStringList("stat-trak-tags." + key + ".item-lore"))
+                .name(plugin.getConfig().getString("stat-trak-blocks." + key + ".item-name"))
+                .lore(plugin.getConfig().getStringList("stat-trak-blocks." + key + ".item-lore"))
                 .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, key));
 
         plugin.getConfig().getStringList("stat-trak-blocks." + key + ".types")
@@ -45,12 +35,13 @@ public class BlockTraker {
         plugin.getConfig().getStringList("stat-trak-blocks." + key + ".items")
                 .stream().map(str -> Material.valueOf(str.toUpperCase()))
                 .filter(Objects::nonNull)
-                .forEach(material -> acceptableItems.add(material));
+                .forEach(material -> getAcceptableItems().add(material));
 
-        this.itemStack = builder.build();
-        this.itemKey = new NamespacedKey(plugin, key);
-        this.dataLore = plugin.getConfig().getString("stat-trak-tags." + key + ".trak-lore");
-        this.prefixLore = Text.colorize(dataLore.split("%amount%")[0]);
+        setItemStack(builder.build());
+
+        setItemKey(new NamespacedKey(plugin, key));
+        setDataLore(plugin.getConfig().getString("stat-trak-blocks." + key + ".trak-lore"));
+        setPrefixLore(Text.colorize(getDataLore().split("%amount%")[0]));
     }
 
     public static BlockTraker create(String key, StatTrakPlugin plugin) {
@@ -65,7 +56,7 @@ public class BlockTraker {
         builder.clearLore();
         builder.unflag(ItemFlag.HIDE_ENCHANTS);
         oldItemLore.forEach(currLore -> {
-            if (currLore.startsWith(this.prefixLore)) {
+            if (currLore.startsWith(getPrefixLore())) {
                 builder.lore(getDataLore().replace("%amount%", String.format("%,d", total)));
             } else {
                 builder.lore(currLore);
@@ -76,18 +67,6 @@ public class BlockTraker {
 
     public HashSet<Material> getMaterials() {
         return materials;
-    }
-
-    public String getDataLore() {
-        return dataLore;
-    }
-
-    public NamespacedKey getItemKey() {
-        return itemKey;
-    }
-
-    public ItemStack getItemStack() {
-        return itemStack;
     }
 
 }

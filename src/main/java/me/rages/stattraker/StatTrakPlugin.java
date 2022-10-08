@@ -17,8 +17,6 @@ public final class StatTrakPlugin extends ExtendedJavaPlugin {
     private NamespacedKey statTrakItemKey;
     private ImmutableSet<Material> validItems = ImmutableSet.of(
             Material.DIAMOND_AXE, Material.NETHERITE_AXE, Material.IRON_AXE,
-            Material.DIAMOND_SHOVEL, Material.NETHERITE_SHOVEL, Material.IRON_SHOVEL,
-            Material.DIAMOND_PICKAXE, Material.NETHERITE_PICKAXE, Material.IRON_PICKAXE,
             Material.DIAMOND_SWORD, Material.NETHERITE_SWORD, Material.IRON_SWORD,
             Material.CROSSBOW, Material.BOW, Material.TRIDENT
     );

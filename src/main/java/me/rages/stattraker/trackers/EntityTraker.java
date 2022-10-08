@@ -16,12 +16,7 @@ import java.util.List;
  * @author : Michael
  * @since : 8/7/2022, Sunday
  **/
-public class EntityTraker {
-
-    private ItemStack itemStack;
-    private NamespacedKey itemKey;
-    private String dataLore;
-    private String prefixLore;
+public class EntityTraker extends Traker {
 
     public EntityTraker(EntityType entityType, StatTrakPlugin plugin) {
         ItemStackBuilder builder = ItemStackBuilder.of(Material.NAME_TAG)
@@ -29,10 +24,10 @@ public class EntityTraker {
                 .lore(plugin.getConfig().getStringList("stat-trak-entities." + entityType.name() + ".item-lore"))
                 .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, entityType.name()));
 
-        this.itemStack = builder.build();
-        this.itemKey = new NamespacedKey(plugin, entityType.name());
-        this.dataLore = plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".trak-lore");
-        this.prefixLore = Text.colorize(dataLore.split("%amount%")[0]);
+        setItemStack(builder.build());
+        setItemKey(new NamespacedKey(plugin, entityType.name()));
+        setDataLore(plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".trak-lore"));
+        setPrefixLore(Text.colorize(getDataLore().split("%amount%")[0]));
     }
 
     public static EntityTraker create(EntityType entityType, StatTrakPlugin plugin) {
@@ -46,7 +41,7 @@ public class EntityTraker {
         List<String> oldItemLore = itemStack.getItemMeta().getLore();
         builder.clearLore();
         builder.unflag(ItemFlag.HIDE_ENCHANTS);
-        oldItemLore.stream().filter(currLore -> !currLore.startsWith(this.prefixLore)).forEach(builder::lore);
+        oldItemLore.stream().filter(currLore -> !currLore.startsWith(getPrefixLore())).forEach(builder::lore);
         builder.lore(getDataLore().replace("%amount%", String.format("%,d", total)));
         return builder.build();
     }
@@ -59,7 +54,7 @@ public class EntityTraker {
         builder.clearLore();
         builder.unflag(ItemFlag.HIDE_ENCHANTS);
         oldItemLore.forEach(currLore -> {
-            if (currLore.startsWith(this.prefixLore)) {
+            if (currLore.startsWith(getPrefixLore())) {
                 builder.lore(getDataLore().replace("%amount%", String.format("%,d", total)));
             } else {
                 builder.lore(currLore);
@@ -68,15 +63,4 @@ public class EntityTraker {
         return builder.build();
     }
 
-    public String getDataLore() {
-        return dataLore;
-    }
-
-    public NamespacedKey getItemKey() {
-        return itemKey;
-    }
-
-    public ItemStack getItemStack() {
-        return itemStack;
-    }
 }

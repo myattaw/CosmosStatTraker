@@ -37,14 +37,14 @@ stat-trak-entities:
     trak-lore: "&cPlayers Killed: &f%amount%"
 
 stat-trak-blocks:
-  IRON_ORES:
-    item-name: "&7[&7&lSKELETON TRAKER &7]"
+  IRON_ORE:
+    item-name: "&7[&d&lIRON TRAKER &7]"
     item-lore:
-      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - "&7Click this item on top of a tool to start tracking stats."
       - ""
       - "&f&lValid Items:"
       - "&7- Diamond Pickaxe"
-    trak-lore: "&7Iron Ores Mined: &f%amount%"
+    trak-lore: "&dIron Ores Mined: &f%amount%"
     types:
       - IRON_ORE
     items:
