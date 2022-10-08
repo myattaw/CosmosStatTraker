@@ -24,10 +24,7 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
@@ -38,6 +35,7 @@ public class StatTrakManager implements TerminableModule {
 
     private Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
     private Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
+    private Set<Traker> trakersSet = new HashSet<>();
 
     private StatTrakPlugin plugin;
 
@@ -47,13 +45,18 @@ public class StatTrakManager implements TerminableModule {
         plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
                 .stream().map(EntityType::valueOf)
                 .filter(Objects::nonNull)
-                .forEach(entityType -> entityTrakerMap.put(entityType.name(), EntityTraker.create(entityType, plugin)));
+                .forEach(entityType -> {
+                    EntityTraker entityTraker = EntityTraker.create(entityType, plugin);
+                    entityTrakerMap.put(entityType.name(), entityTraker);
+                    trakersSet.add(entityTraker);
+                });
 
         plugin.getConfig().getConfigurationSection("stat-trak-blocks").getKeys(false)
                 .stream().map(str -> BlockTraker.create(str, plugin))
-                .forEach(blockTraker -> blockTraker.getMaterials().forEach(material -> {
-                    blockTrakerMap.put(material, blockTraker);
-                }));
+                .forEach(blockTraker -> {
+                    blockTraker.getMaterials().forEach(material -> blockTrakerMap.put(material, blockTraker));
+                    trakersSet.add(blockTraker);
+                });
     }
 
     @Override
@@ -100,11 +103,11 @@ public class StatTrakManager implements TerminableModule {
         Commands.create().assertPermission("stattrak.admin").assertUsage("[player] <amount>").handler(cmd -> {
             Optional<Player> target = cmd.arg(0).parse(Player.class);
             Integer amount = cmd.arg(1).parse(Integer.class).orElse(1);
-            Object[] values = entityTrakerMap.values().toArray();
+            Object[] values = trakersSet.toArray();
 
             if (target.isPresent()) {
                 for (int i = 0; i < amount; ++i) {
-                    EntityTraker randomValue = (EntityTraker) values[ThreadLocalRandom.current().nextInt(values.length)];
+                    Traker randomValue = (Traker) values[ThreadLocalRandom.current().nextInt(values.length)];
                     Map<Integer, ItemStack> leftOvers = target.get().getInventory().addItem(randomValue.getItemStack());
                     if (!leftOvers.isEmpty()) {
                         leftOvers.values().forEach(item -> target.get().getWorld().dropItem(target.get().getLocation(), item));
