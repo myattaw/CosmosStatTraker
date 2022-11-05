@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author : Michael
@@ -196,13 +195,16 @@ public class StatTrakManager implements TerminableModule {
                         check.setAmount(1);
                         if (check.equals(plugin.getRemoverItemStack())) {
                             ItemStack current = event.getCurrentItem();
-                            event.setCancelled(true);
-                            if (player.getItemOnCursor().getAmount() == 1) {
-                                player.setItemOnCursor(null);
-                            } else {
-                                player.getItemOnCursor().setAmount(cursor.getAmount() - 1);
+                            ItemStack removedTraker = removeTrakerFromItem(current);
+                            if (removedTraker != null) {
+                                event.setCancelled(true);
+                                if (player.getItemOnCursor().getAmount() == 1) {
+                                    player.setItemOnCursor(null);
+                                } else {
+                                    player.getItemOnCursor().setAmount(cursor.getAmount() - 1);
+                                }
+                                event.setCurrentItem(removedTraker);
                             }
-                            event.setCurrentItem(removeTrakerFromItem(current));
                         }
                     }
                 }).bindWith(consumer);
@@ -254,23 +256,30 @@ public class StatTrakManager implements TerminableModule {
         if (itemStack.hasItemMeta()) {
             PersistentDataContainer persistentDataContainer = itemStack.getItemMeta().getPersistentDataContainer();
             for (NamespacedKey key : persistentDataContainer.getKeys()) {
-                if (EntityType.valueOf(key.getKey().toUpperCase()) != null) {
-                    Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
-                    List<String> oldLore = itemStack.getLore();
 
-                    ItemStackBuilder builder = ItemStackBuilder.of(itemStack).transformMeta(itemMeta ->
-                            itemMeta.getPersistentDataContainer().remove(key)
-                    );
-                    builder.clearLore();
-                    if (traker != null) {
-                        for (String lore : oldLore) {
-                            if (!lore.startsWith(traker.getPrefixLore())) {
-                                builder.lore(lore);
-                            }
-                        }
-                        return builder.build();
-                    }
+                Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
+
+                if (traker == null) {
+                    traker = blockTrakerMap.get(Material.valueOf(key.getKey().toUpperCase()));
+                } else if (traker == null) {
+                    return null;
                 }
+
+                List<String> oldLore = itemStack.getLore();
+
+                ItemStackBuilder builder = ItemStackBuilder.of(itemStack).transformMeta(itemMeta ->
+                        itemMeta.getPersistentDataContainer().remove(key)
+                );
+                builder.clearLore();
+                if (traker != null) {
+                    for (String lore : oldLore) {
+                        if (!lore.startsWith(traker.getPrefixLore())) {
+                            builder.lore(lore);
+                        }
+                    }
+                    return builder.build();
+                }
+
             }
         }
         return null;
