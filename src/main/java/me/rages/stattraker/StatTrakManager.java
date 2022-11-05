@@ -11,6 +11,7 @@ import me.rages.stattraker.trackers.BlockTraker;
 import me.rages.stattraker.trackers.EntityTraker;
 import me.rages.stattraker.trackers.Traker;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author : Michael
@@ -75,6 +77,29 @@ public class StatTrakManager implements TerminableModule {
                 return Optional.empty();
             }
         });
+
+        Commands.create().assertPermission("stattrak.admin").assertUsage("[player] <amount>").handler(cmd -> {
+            Optional<Player> target = cmd.arg(0).parse(Player.class);
+            Integer amount = cmd.arg(1).parse(Integer.class).orElse(1);
+
+            if (target.isPresent()) {
+                for (int i = 0; i < amount; ++i) {
+                    Map<Integer, ItemStack> leftOvers = target.get().getInventory().addItem(plugin.getRemoverItemStack());
+                    if (!leftOvers.isEmpty()) {
+                        leftOvers.values().forEach(item -> target.get().getWorld().dropItem(target.get().getLocation(), item));
+                    }
+                }
+            }
+
+            target.get().sendMessage(Text.colorize(this.plugin.getConfig().getString("messages.traker-received"))
+                    .replace("%amount%", String.valueOf(amount))
+                    .replace("%player%", target.get().getName()));
+
+            cmd.sender().sendMessage(Text.colorize(this.plugin.getConfig().getString("messages.traker-given"))
+                    .replace("%amount%", String.valueOf(amount))
+                    .replace("%player%", target.get().getName()));
+
+        }).registerAndBind(consumer, new String[]{"trakremover"});
 
         Commands.create().assertPermission("stattrak.admin").assertUsage("[player] [type] <amount>").handler(cmd -> {
             Optional<Player> target = cmd.arg(0).parse(Player.class);
@@ -166,6 +191,19 @@ public class StatTrakManager implements TerminableModule {
                                 }
                             }
                         }
+
+                        ItemStack check = cursor.clone();
+                        check.setAmount(1);
+                        if (check.equals(plugin.getRemoverItemStack())) {
+                            ItemStack current = event.getCurrentItem();
+                            event.setCancelled(true);
+                            if (player.getItemOnCursor().getAmount() == 1) {
+                                player.setItemOnCursor(null);
+                            } else {
+                                player.getItemOnCursor().setAmount(cursor.getAmount() - 1);
+                            }
+                            event.setCurrentItem(removeTrakerFromItem(current));
+                        }
                     }
                 }).bindWith(consumer);
 
@@ -210,6 +248,32 @@ public class StatTrakManager implements TerminableModule {
                 .transformMeta(meta -> meta.getPersistentDataContainer().set(traker.getItemKey(), PersistentDataType.INTEGER, 0))
                 .lore(traker.getDataLore().replace("%amount%", "0"))
                 .build();
+    }
+
+    private ItemStack removeTrakerFromItem(ItemStack itemStack) {
+        if (itemStack.hasItemMeta()) {
+            PersistentDataContainer persistentDataContainer = itemStack.getItemMeta().getPersistentDataContainer();
+            for (NamespacedKey key : persistentDataContainer.getKeys()) {
+                if (EntityType.valueOf(key.getKey().toUpperCase()) != null) {
+                    Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
+                    List<String> oldLore = itemStack.getLore();
+
+                    ItemStackBuilder builder = ItemStackBuilder.of(itemStack).transformMeta(itemMeta ->
+                            itemMeta.getPersistentDataContainer().remove(key)
+                    );
+                    builder.clearLore();
+                    if (traker != null) {
+                        for (String lore : oldLore) {
+                            if (!lore.startsWith(traker.getPrefixLore())) {
+                                builder.lore(lore);
+                            }
+                        }
+                        return builder.build();
+                    }
+                }
+            }
+        }
+        return null;
     }
 
 }

@@ -4,6 +4,12 @@ messages:
   already-exist: "&eStat traker already exist on this item."
   invalid-item: "&cYou cannot apply stat traker to this item."
 
+stack-trak-remover:
+  type: INK_SAC
+  name: "&cStat Trak Remover"
+  lore:
+    - "&7Apply to remove tracker from item"
+
 # List of available entity types to track
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
 # DO NOT MAKE DIFFERENT TRAKER ITEMS SHARE THE SAME 'TRAK-LORE'
