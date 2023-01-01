@@ -20,6 +20,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
@@ -249,6 +250,7 @@ public class StatTrakManager implements TerminableModule {
         return ItemStackBuilder.of(itemStack)
                 .transformMeta(meta -> meta.getPersistentDataContainer().set(traker.getItemKey(), PersistentDataType.INTEGER, 0))
                 .lore(traker.getDataLore().replace("%amount%", "0"))
+                .unflag(ItemFlag.HIDE_ENCHANTS)
                 .build();
     }
 
@@ -277,6 +279,7 @@ public class StatTrakManager implements TerminableModule {
                             builder.lore(lore);
                         }
                     }
+                    itemStack.removeItemFlags(ItemFlag.HIDE_ENCHANTS);
                     return builder.build();
                 }
 
