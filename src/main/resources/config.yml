@@ -5,6 +5,7 @@ messages:
   invalid-item: "&cYou cannot apply stat traker to this item."
 
 stack-trak-remover:
+  return-traker: true
   type: INK_SAC
   name: "&cStat Trak Remover"
   lore:

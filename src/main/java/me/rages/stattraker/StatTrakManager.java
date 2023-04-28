@@ -41,8 +41,12 @@ public class StatTrakManager implements TerminableModule {
 
     private StatTrakPlugin plugin;
 
+    private boolean returnTrakerItem;
+
     public StatTrakManager(StatTrakPlugin plugin) {
         this.plugin = plugin;
+
+        this.returnTrakerItem = plugin.getConfig().getBoolean("stack-trak-remover.return-traker", true);
 
         plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
                 .stream().map(EntityType::valueOf)
@@ -196,7 +200,7 @@ public class StatTrakManager implements TerminableModule {
                         check.setAmount(1);
                         if (check.equals(plugin.getRemoverItemStack())) {
                             ItemStack current = event.getCurrentItem();
-                            ItemStack removedTraker = removeTrakerFromItem(current);
+                            ItemStack removedTraker = removeTrakerFromItem(player, current);
                             if (removedTraker != null) {
                                 event.setCancelled(true);
                                 if (player.getItemOnCursor().getAmount() == 1) {
@@ -254,7 +258,7 @@ public class StatTrakManager implements TerminableModule {
                 .build();
     }
 
-    private ItemStack removeTrakerFromItem(ItemStack itemStack) {
+    private ItemStack removeTrakerFromItem(Player player, ItemStack itemStack) {
         if (itemStack.hasItemMeta()) {
             PersistentDataContainer persistentDataContainer = itemStack.getItemMeta().getPersistentDataContainer();
             for (NamespacedKey key : persistentDataContainer.getKeys()) {
@@ -280,6 +284,14 @@ public class StatTrakManager implements TerminableModule {
                         }
                     }
                     itemStack.removeItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+                    if (returnTrakerItem) {
+                        Map<Integer, ItemStack> leftOvers = player.getInventory().addItem(traker.getItemStack());
+                        if (!leftOvers.isEmpty()) {
+                            leftOvers.values().forEach(item -> player.getWorld().dropItem(player.getLocation(), item));
+                        }
+                    }
+
                     return builder.build();
                 }
 
