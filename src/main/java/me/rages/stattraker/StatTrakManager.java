@@ -263,6 +263,8 @@ public class StatTrakManager implements TerminableModule {
             PersistentDataContainer persistentDataContainer = itemStack.getItemMeta().getPersistentDataContainer();
             for (NamespacedKey key : persistentDataContainer.getKeys()) {
 
+                if (!StatTrakPlugin.TRACKER_KEYS.contains(key)) continue;
+
                 Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
 
                 if (traker == null) {

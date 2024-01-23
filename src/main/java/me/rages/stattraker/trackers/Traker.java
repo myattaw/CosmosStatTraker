@@ -1,5 +1,6 @@
 package me.rages.stattraker.trackers;
 
+import me.rages.stattraker.StatTrakPlugin;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
@@ -30,6 +31,7 @@ public class Traker {
 
     public void setItemKey(NamespacedKey itemKey) {
         this.itemKey = itemKey;
+        StatTrakPlugin.TRACKER_KEYS.add(itemKey);
     }
 
     public NamespacedKey getItemKey() {

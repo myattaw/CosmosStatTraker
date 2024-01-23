@@ -8,6 +8,9 @@ import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.HashSet;
+import java.util.Set;
+
 @Plugin(
         name = "StatTrak",
         hardDepends = {"helper"},
@@ -19,6 +22,7 @@ public final class StatTrakPlugin extends ExtendedJavaPlugin {
     private NamespacedKey statTrakItemKey;
 
     private ItemStack removerItemStack;
+    public static Set<NamespacedKey> TRACKER_KEYS = new HashSet<>();
 
     private ImmutableSet<Material> validItems = ImmutableSet.of(
             Material.DIAMOND_AXE, Material.NETHERITE_AXE, Material.IRON_AXE,
@@ -28,6 +32,7 @@ public final class StatTrakPlugin extends ExtendedJavaPlugin {
 
     @Override
     protected void enable() {
+        TRACKER_KEYS.clear();
         this.statTrakItemKey = new NamespacedKey(this, ITEM_KEY);
         this.saveDefaultConfig();
         this.bindModule(new StatTrakManager(this));
