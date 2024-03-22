@@ -7,6 +7,9 @@ import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.module.TerminableModule;
 import me.lucko.helper.text3.Text;
+import me.rages.augments.AugmentType;
+import me.rages.augments.event.AugmentRewardEvent;
+import me.rages.stattraker.trackers.AugmentTraker;
 import me.rages.stattraker.trackers.BlockTraker;
 import me.rages.stattraker.trackers.EntityTraker;
 import me.rages.stattraker.trackers.Traker;
@@ -36,6 +39,7 @@ import java.util.concurrent.ThreadLocalRandom;
 public class StatTrakManager implements TerminableModule {
 
     private Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
+    private Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
     private Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
     private Set<Traker> trakersSet = new HashSet<>();
 
@@ -57,6 +61,15 @@ public class StatTrakManager implements TerminableModule {
                     trakersSet.add(entityTraker);
                 });
 
+        plugin.getConfig().getConfigurationSection("stat-trak-augments").getKeys(false)
+                .stream().map(AugmentType::valueOf)
+                .filter(Objects::nonNull)
+                .forEach(augmentType -> {
+                    AugmentTraker augmentTraker = AugmentTraker.create(augmentType, plugin);
+                    augmentTrakerMap.put(augmentType.name(), augmentTraker);
+                    trakersSet.add(augmentTraker);
+                });
+
         plugin.getConfig().getConfigurationSection("stat-trak-blocks").getKeys(false)
                 .stream().map(str -> BlockTraker.create(str, plugin))
                 .forEach(blockTraker -> {
@@ -73,6 +86,8 @@ public class StatTrakManager implements TerminableModule {
                 EntityTraker entityTraker = entityTrakerMap.get(type.toUpperCase());
                 if (entityTraker != null) {
                     return Optional.ofNullable(entityTrakerMap.get(type.toUpperCase()));
+                } else if (augmentTrakerMap.containsKey(type.toUpperCase())) {
+                    return Optional.ofNullable(augmentTrakerMap.get(type.toUpperCase()));
                 } else {
                     Material material = Material.valueOf(type.toUpperCase());
                     return Optional.ofNullable(blockTrakerMap.get(material));
@@ -103,7 +118,7 @@ public class StatTrakManager implements TerminableModule {
                     .replace("%amount%", String.valueOf(amount))
                     .replace("%player%", target.get().getName()));
 
-        }).registerAndBind(consumer, new String[]{"trakremover"});
+        }).registerAndBind(consumer, "trakremover");
 
         Commands.create().assertPermission("stattrak.admin").assertUsage("[player] [type] <amount>").handler(cmd -> {
             Optional<Player> target = cmd.arg(0).parse(Player.class);
@@ -152,7 +167,7 @@ public class StatTrakManager implements TerminableModule {
                     .replace("%amount%", String.valueOf(amount))
                     .replace("%player%", target.get().getName()));
 
-        }).registerAndBind(consumer, new String[]{"randomtraker", "randomtracker", "rndtraker"});
+        }).registerAndBind(consumer, "randomtraker", "randomtracker", "rndtraker");
 
 
         Events.subscribe(InventoryClickEvent.class, EventPriority.HIGH)
@@ -235,6 +250,21 @@ public class StatTrakManager implements TerminableModule {
                         player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
                     }
                 }).bindWith(consumer);
+
+        if (plugin.getServer().getPluginManager().isPluginEnabled("Augments")) {
+            Events.subscribe(AugmentRewardEvent.class)
+                    .filter(event -> event.getAugmentType() != null)
+                    .handler(event -> {
+                        Player player = event.getPlayer();
+                        ItemStack itemStack = player.getInventory().getItemInMainHand();
+                        AugmentTraker augmentTraker = augmentTrakerMap.get(event.getAugmentType().name());
+                        if (augmentTraker != null && itemStack.hasItemMeta()
+                                && itemStack.getItemMeta().getPersistentDataContainer().has(augmentTraker.getItemKey())) {
+                            player.getInventory().setItemInMainHand(augmentTraker.incrementLore(itemStack, 1));
+                        }
+                    }).bindWith(consumer);
+        }
+
 
         Events.subscribe(BlockBreakEvent.class, EventPriority.HIGHEST)
                 .filter(EventFilters.ignoreCancelled())

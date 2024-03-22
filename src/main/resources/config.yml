@@ -43,6 +43,44 @@ stat-trak-entities:
       - "&7- Diamond Axe"
     trak-lore: "&cPlayers Killed: &f%amount%"
 
+stat-trak-augments:
+  FARMING:
+    item-name: "&7[&4&lFARMING AUGMENT TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&cPlayers Killed: &f%amount%"
+  TOOLS:
+    item-name: "&7[&4&lTOOL AUGMENT TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&cPlayers Killed: &f%amount%"
+  FISHING:
+    item-name: "&7[&4&lFISHING AUGMENT TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&cPlayers Killed: &f%amount%"
+  WEAPON:
+    item-name: "&7[&4&lWEAPON AUGMENT TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+      - ""
+      - "&f&lValid Items:"
+      - "&7- Diamond Sword"
+      - "&7- Diamond Axe"
+    trak-lore: "&cPlayers Killed: &f%amount%"
+
 stat-trak-blocks:
   IRON_ORE:
     item-name: "&7[&d&lIRON TRAKER &7]"

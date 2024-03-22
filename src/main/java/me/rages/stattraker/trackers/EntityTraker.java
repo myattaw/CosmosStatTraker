@@ -2,6 +2,7 @@ package me.rages.stattraker.trackers;
 
 import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.text3.Text;
+import me.rages.augments.AugmentType;
 import me.rages.stattraker.StatTrakPlugin;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;

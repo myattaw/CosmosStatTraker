@@ -14,6 +14,7 @@ import java.util.Set;
 @Plugin(
         name = "StatTrak",
         hardDepends = {"helper"},
+        softDepends = {"Augments"},
         apiVersion = "1.18"
 )
 public final class StatTrakPlugin extends ExtendedJavaPlugin {

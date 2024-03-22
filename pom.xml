@@ -66,6 +66,15 @@
 
     <dependencies>
         <dependency>
+            <groupId>me.rages.augments</groupId>
+            <artifactId>Augments</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>system</scope>
+            <systemPath>${pom.basedir}/libs/Augments-1.0-SNAPSHOT.jar</systemPath>
+        </dependency>
+
+
+        <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
             <version>1.18.1-R0.1-SNAPSHOT</version>
