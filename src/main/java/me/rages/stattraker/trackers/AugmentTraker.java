@@ -31,6 +31,12 @@ public class AugmentTraker extends Traker {
         setItemKey(new NamespacedKey(plugin, augmentType.name()));
         setDataLore(plugin.getConfig().getString("stat-trak-augments." + augmentType.name() + ".trak-lore"));
         setPrefixLore(Text.colorize(getDataLore().split("%amount%")[0]));
+
+        plugin.getConfig().getStringList("stat-trak-augments." + augmentType.name() + ".items")
+                .stream().map(str -> Material.valueOf(str.toUpperCase()))
+                .filter(Objects::nonNull)
+                .forEach(material -> getAcceptableItems().add(material));
+
     }
 
     public static AugmentTraker create(AugmentType entityType, StatTrakPlugin plugin) {

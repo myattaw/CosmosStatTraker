@@ -142,7 +142,7 @@ public class StatTrakManager implements TerminableModule {
                     .replace("%amount%", String.valueOf(amount))
                     .replace("%player%", target.get().getName()));
 
-        }).registerAndBind(consumer, new String[]{"stattrak", "stattrack"});
+        }).registerAndBind(consumer, "stattrak", "stattrack");
 
         Commands.create().assertPermission("stattrak.admin").assertUsage("[player] <amount>").handler(cmd -> {
             Optional<Player> target = cmd.arg(0).parse(Player.class);
@@ -182,6 +182,8 @@ public class StatTrakManager implements TerminableModule {
                             String data = container.get(plugin.getStatTrakItemKey(), PersistentDataType.STRING).toUpperCase();
                             if (entityTrakerMap.containsKey(data)) {
                                 traker = entityTrakerMap.get(data);
+                            } else if (augmentTrakerMap.containsKey(data)) {
+                                traker = augmentTrakerMap.get(data);
                             } else {
                                 Material material = Material.valueOf(data);
                                 if (material != null) traker = blockTrakerMap.get(material);
