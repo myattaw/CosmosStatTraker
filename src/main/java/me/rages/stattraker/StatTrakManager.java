@@ -299,9 +299,15 @@ public class StatTrakManager implements TerminableModule {
 
                 Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
 
+                if (traker == null && augmentTrakerMap.containsKey(key.getKey().toUpperCase())) {
+                    traker = augmentTrakerMap.get(key.getKey().toUpperCase());
+                }
+
                 if (traker == null) {
                     traker = blockTrakerMap.get(Material.valueOf(key.getKey().toUpperCase()));
-                } else if (traker == null) {
+                }
+
+                if (traker == null) {
                     return null;
                 }
 
