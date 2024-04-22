@@ -242,6 +242,9 @@ public class StatTrakManager implements TerminableModule {
                     }
                 }).bindWith(consumer);
 
+        // Declare a map to store player UUIDs and their last usage time
+        Map<UUID, Long> cooldownMap = new HashMap<>();
+
         Events.subscribe(EntityDeathEvent.class)
                 .filter(event -> event.getEntity().getKiller() != null)
                 .handler(event -> {
@@ -249,7 +252,18 @@ public class StatTrakManager implements TerminableModule {
                     ItemStack itemStack = player.getInventory().getItemInMainHand();
                     EntityTraker entityTraker = entityTrakerMap.get(event.getEntity().getType().name());
                     if (entityTraker != null && itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
-                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
+//                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
+                        UUID playerId = player.getUniqueId();
+                        long currentTime = System.currentTimeMillis();
+                        long cooldownTime = cooldownMap.getOrDefault(playerId, 0L);
+
+                        // Check if the player is still on cooldown
+                        if (currentTime - cooldownTime >= 1500) { // 1500 milliseconds = 1.5 second
+                            // Update the cooldown time for the player
+                            cooldownMap.put(playerId, currentTime);
+                            // Perform the action (setting the item in the player's main hand)
+                            player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
+                        }
                     }
                 }).bindWith(consumer);
 
