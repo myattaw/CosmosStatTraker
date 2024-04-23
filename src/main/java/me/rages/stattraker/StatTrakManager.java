@@ -258,7 +258,7 @@ public class StatTrakManager implements TerminableModule {
                         long cooldownTime = cooldownMap.getOrDefault(playerId, 0L);
 
                         // Check if the player is still on cooldown
-                        if (currentTime - cooldownTime >= 1500) { // 1500 milliseconds = 1.5 second
+                        if (currentTime - cooldownTime >= 1000) {
                             // Update the cooldown time for the player
                             cooldownMap.put(playerId, currentTime);
                             // Perform the action (setting the item in the player's main hand)

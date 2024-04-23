@@ -9,8 +9,11 @@ import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -48,20 +51,31 @@ public class EntityTraker extends Traker {
     }
 
     public ItemStack incrementLore(ItemStack itemStack, int amount) {
-        int total = itemStack.getItemMeta().getPersistentDataContainer().get(getItemKey(), PersistentDataType.INTEGER) + amount;
-        ItemStackBuilder builder = ItemStackBuilder.of(itemStack);
-        builder.transformMeta(meta -> meta.getPersistentDataContainer().set(getItemKey(), PersistentDataType.INTEGER, total));
-        List<String> oldItemLore = itemStack.getItemMeta().getLore();
-        builder.clearLore();
-        builder.unflag(ItemFlag.HIDE_ENCHANTS);
-        oldItemLore.forEach(currLore -> {
-            if (currLore.startsWith(getPrefixLore())) {
-                builder.lore(getDataLore().replace("%amount%", String.format("%,d", total)));
-            } else {
-                builder.lore(currLore);
+        ItemMeta meta = itemStack.getItemMeta();
+
+        // Increment the persistent data value
+        NamespacedKey key = getItemKey();
+        PersistentDataContainer container = meta.getPersistentDataContainer();
+        int total = container.getOrDefault(key, PersistentDataType.INTEGER, 0) + amount;
+        container.set(key, PersistentDataType.INTEGER, total);
+
+        // Update lore
+        List<String> lore = meta.getLore();
+        if (lore != null) {
+            List<String> newLore = new ArrayList<>(lore.size());
+            for (String currLore : lore) {
+                if (currLore.startsWith(getPrefixLore()) || Text.colorize(currLore).startsWith(getPrefixLore())) {
+                    newLore.add(Text.colorize(getDataLore().replace("%amount%", String.format("%,d", total))));
+                } else {
+                    newLore.add(currLore);
+                }
             }
-        });
-        return builder.build();
+            meta.setLore(newLore);
+        }
+
+        // Clear item flags and return the modified ItemStack
+        itemStack.setItemMeta(meta);
+        return itemStack;
     }
 
 }
