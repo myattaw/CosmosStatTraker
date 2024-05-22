@@ -1,4 +1,5 @@
 messages:
+  traker-removed: "&d&lCOSMIC &8&l▶ &7You have removed tracker from item in hand."
   traker-received: "&d&lCOSMIC &8&l▶ &7You have received %amount%x Entity Trackers."
   traker-given: "&d&lCOSMIC &8&l▶ &7You have given &d%amount%x Entity Tracker's &7to &d%player%&7."
   already-exist: "&eStat traker already exist on this item."

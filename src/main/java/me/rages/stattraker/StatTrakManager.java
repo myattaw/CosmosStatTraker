@@ -28,6 +28,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
@@ -143,6 +144,39 @@ public class StatTrakManager implements TerminableModule {
                     .replace("%player%", target.get().getName()));
 
         }).registerAndBind(consumer, "stattrak", "stattrack");
+
+        Commands.create()
+                .assertPermission("stattrak.remove")
+                .assertPlayer()
+                .handler(cmd -> {
+                    // check if player has tracker in inventory
+                    @Nullable ItemStack @NotNull [] contents = cmd.sender().getInventory().getContents();
+                    for (int i = 0, contentsLength = contents.length; i < contentsLength; i++) {
+                        ItemStack item = contents[i];
+                        if (item == null) continue;
+
+                        ItemStack check = item.clone();
+                        check.setAmount(1);
+
+                        if (check.equals(plugin.getRemoverItemStack())) {
+                            ItemStack removedTraker = removeTrakerFromItem(
+                                    cmd.sender(),
+                                    cmd.sender().getInventory().getItemInMainHand()
+                            );
+                            if (removedTraker != null) {
+                                if (item.getAmount() == 1) {
+                                    cmd.sender().getInventory().setItem(i, null);
+                                } else {
+                                    item.setAmount(item.getAmount() - 1);
+                                }
+                                cmd.sender().sendMessage(
+                                        Text.colorize(this.plugin.getConfig().getString("messages.traker-removed"))
+                                );
+                                cmd.sender().getInventory().setItemInMainHand(removedTraker);
+                            }
+                        }
+                    }
+                }).registerAndBind(consumer, "removetracker");
 
         Commands.create().assertPermission("stattrak.admin").assertUsage("[player] <amount>").handler(cmd -> {
             Optional<Player> target = cmd.arg(0).parse(Player.class);
