@@ -2,11 +2,13 @@ package me.rages.stattraker;
 
 import me.lucko.helper.Commands;
 import me.lucko.helper.Events;
+import me.lucko.helper.Schedulers;
 import me.lucko.helper.event.filter.EventFilters;
 import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.terminable.TerminableConsumer;
 import me.lucko.helper.terminable.module.TerminableModule;
 import me.lucko.helper.text3.Text;
+import me.lucko.helper.utils.Players;
 import me.rages.augments.AugmentType;
 import me.rages.augments.event.AugmentRewardEvent;
 import me.rages.stattraker.trackers.AugmentTraker;
@@ -23,6 +25,7 @@ import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author : Michael
@@ -315,6 +319,9 @@ public class StatTrakManager implements TerminableModule {
                     }).bindWith(consumer);
         }
 
+        Map<UUID, Map<BlockTraker, Integer>> cachedAmounts = new HashMap<>();
+
+//        player.getInventory().setItemInMainHand(blockTraker.incrementLore(itemStack, 1));
 
         Events.subscribe(BlockBreakEvent.class, EventPriority.HIGHEST)
                 .filter(EventFilters.ignoreCancelled())
@@ -324,9 +331,51 @@ public class StatTrakManager implements TerminableModule {
                     BlockTraker blockTraker = blockTrakerMap.get(event.getBlock().getType());
 
                     if (blockTraker != null && itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(blockTraker.getItemKey())) {
-                        player.getInventory().setItemInMainHand(blockTraker.incrementLore(itemStack, 1));
+                        UUID playerUUID = player.getUniqueId();
+                        Map<BlockTraker, Integer> playerCache = cachedAmounts.getOrDefault(playerUUID, new HashMap<>());
+
+                        playerCache.put(blockTraker, playerCache.getOrDefault(blockTraker, 0) + 1);
+                        cachedAmounts.put(playerUUID, playerCache);
                     }
                 }).bindWith(consumer);
+
+        Events.subscribe(PlayerItemHeldEvent.class)
+                .filter(event -> cachedAmounts.containsKey(event.getPlayer().getUniqueId()))
+                .filter(event -> event.getPlayer().getInventory().getItem(event.getPreviousSlot()) != null)
+                .handler(event -> {
+
+                    Player player = event.getPlayer();
+                    ItemStack itemStack = player.getInventory().getItem(event.getPreviousSlot());
+
+                    cachedAmounts.get(player.getUniqueId()).entrySet().stream()
+                            .filter(entry -> itemStack.hasItemMeta() && itemStack.getItemMeta()
+                                    .getPersistentDataContainer().has(entry.getKey().getItemKey()))
+                            .forEach(entry -> player.getInventory().setItemInMainHand(entry.getKey().incrementLore(
+                                    itemStack,
+                                    entry.getValue())
+                            ));
+                    cachedAmounts.remove(player.getUniqueId());
+
+                }).bindWith(consumer);
+
+        Schedulers.sync().runRepeating(() -> {
+
+            if (!cachedAmounts.isEmpty()) {
+                cachedAmounts.keySet().stream().map(Players::get).filter(Optional::isPresent).forEach(player -> {
+                    ItemStack itemStack = player.get().getInventory().getItemInMainHand();
+                    if (itemStack != null) {
+                        cachedAmounts.get(player.get().getUniqueId()).entrySet().stream()
+                                .filter(entry -> itemStack.hasItemMeta() && itemStack.getItemMeta()
+                                        .getPersistentDataContainer().has(entry.getKey().getItemKey()))
+                                .forEach(entry -> player.get().getInventory().setItemInMainHand(
+                                                entry.getKey().incrementLore(itemStack, entry.getValue())
+                                        )
+                                );
+                    }
+                });
+                cachedAmounts.clear();
+            }
+        }, 5L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS).bindWith(consumer);
 
     }
 
