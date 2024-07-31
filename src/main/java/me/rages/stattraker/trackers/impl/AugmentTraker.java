@@ -1,17 +1,16 @@
-package me.rages.stattraker.trackers;
+package me.rages.stattraker.trackers.impl;
 
 import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.text3.Text;
 import me.rages.augments.AugmentType;
 import me.rages.stattraker.StatTrakPlugin;
+import me.rages.stattraker.trackers.Traker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.persistence.PersistentDataType;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 

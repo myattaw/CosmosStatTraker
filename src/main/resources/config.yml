@@ -15,15 +15,23 @@ stack-trak-remover:
 # List of available entity types to track
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
 # DO NOT MAKE DIFFERENT TRAKER ITEMS SHARE THE SAME 'TRAK-LORE'
+
+stat-trak-armor:
+  HITS_TAKEN:
+    item-name: "&7[&9&lHITS TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+  DAMAGE_TAKEN:
+    item-name: "&7[&9&lHITS TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+
+
 stat-trak-entities:
   ZOMBIE:
     item-name: "&7[&b&lZOMBIE TRAKER &7]"
     item-lore:
       - "&7Click this item on top of a sword or axe to start tracking stats."
-      - ""
-      - "&f&lValid Items:"
-      - "&7- Diamond Sword"
-      - "&7- Diamond Axe"
     trak-lore: "&bZombies Killed: &f%amount%"
   SKELETON:
     item-name: "&7[&7&lSKELETON TRAKER &7]"

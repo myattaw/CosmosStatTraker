@@ -11,23 +11,27 @@ import me.lucko.helper.text3.Text;
 import me.lucko.helper.utils.Players;
 import me.rages.augments.AugmentType;
 import me.rages.augments.event.AugmentRewardEvent;
-import me.rages.stattraker.trackers.AugmentTraker;
-import me.rages.stattraker.trackers.BlockTraker;
-import me.rages.stattraker.trackers.EntityTraker;
 import me.rages.stattraker.trackers.Traker;
+import me.rages.stattraker.trackers.impl.ArmorTraker;
+import me.rages.stattraker.trackers.impl.AugmentTraker;
+import me.rages.stattraker.trackers.impl.BlockTraker;
+import me.rages.stattraker.trackers.impl.EntityTraker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
@@ -43,9 +47,11 @@ import java.util.concurrent.TimeUnit;
  **/
 public class StatTrakManager implements TerminableModule {
 
-    private Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
-    private Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
-    private Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
+    private final Map<String, ArmorTraker> armorTrakerMap = new HashMap<>();
+    private final Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
+    private final Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
+    private final Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
+
     private Set<Traker> trakersSet = new HashSet<>();
 
     private StatTrakPlugin plugin;
@@ -56,6 +62,14 @@ public class StatTrakManager implements TerminableModule {
         this.plugin = plugin;
 
         this.returnTrakerItem = plugin.getConfig().getBoolean("stack-trak-remover.return-traker", true);
+
+        ArmorTraker armorHitsTraker = ArmorTraker.create(true, plugin);
+        ArmorTraker armorDamageTraker = ArmorTraker.create(false, plugin);
+
+        armorTrakerMap.put(armorHitsTraker.getKey(), armorHitsTraker);
+        armorTrakerMap.put(armorDamageTraker.getKey(), armorDamageTraker);
+        trakersSet.add(armorHitsTraker);
+        trakersSet.add(armorDamageTraker);
 
         plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
                 .stream().map(EntityType::valueOf)
@@ -93,6 +107,8 @@ public class StatTrakManager implements TerminableModule {
                     return Optional.ofNullable(entityTrakerMap.get(type.toUpperCase()));
                 } else if (augmentTrakerMap.containsKey(type.toUpperCase())) {
                     return Optional.ofNullable(augmentTrakerMap.get(type.toUpperCase()));
+                } else if (armorTrakerMap.containsKey(type.toUpperCase())) {
+                    return Optional.ofNullable(armorTrakerMap.get(type.toUpperCase()));
                 } else {
                     Material material = Material.valueOf(type.toUpperCase());
                     return Optional.ofNullable(blockTrakerMap.get(material));
@@ -207,6 +223,23 @@ public class StatTrakManager implements TerminableModule {
 
         }).registerAndBind(consumer, "randomtraker", "randomtracker", "rndtraker");
 
+        EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+        Events.subscribe(EntityDamageByEntityEvent.class)
+                .filter(event -> event.getEntity() instanceof Player)
+                .filter(event -> event.getDamager() instanceof Player)
+                .handler(event -> {
+                    Player player = (Player) event.getEntity();
+                    Arrays.stream(armorSlots).map(equipmentSlot -> player.getInventory().getItem(equipmentSlot))
+                            .filter(itemStack -> itemStack.hasItemMeta()).forEach(itemStack -> {
+                                ItemMeta meta = itemStack.getItemMeta();
+                                armorTrakerMap.values().stream()
+                                        .filter(traker -> meta.getPersistentDataContainer().has(traker.getItemKey()))
+                                        .forEach(traker -> traker.incrementLore(itemStack, traker.isHits() ? 1 :
+                                                (int) event.getFinalDamage()
+                                        ));
+                            });
+
+                }).bindWith(consumer);
 
         Events.subscribe(InventoryClickEvent.class, EventPriority.HIGH)
                 .handler(event -> {
@@ -222,6 +255,8 @@ public class StatTrakManager implements TerminableModule {
                                 traker = entityTrakerMap.get(data);
                             } else if (augmentTrakerMap.containsKey(data)) {
                                 traker = augmentTrakerMap.get(data);
+                            } else if (armorTrakerMap.containsKey(data)) {
+                                traker = armorTrakerMap.get(data);
                             } else {
                                 Material material = Material.valueOf(data);
                                 if (material != null) traker = blockTrakerMap.get(material);
@@ -375,7 +410,7 @@ public class StatTrakManager implements TerminableModule {
                 });
                 cachedAmounts.clear();
             }
-        }, 5L, TimeUnit.SECONDS, 5L, TimeUnit.SECONDS).bindWith(consumer);
+        }, 15L, TimeUnit.SECONDS, 15L, TimeUnit.SECONDS).bindWith(consumer);
 
     }
 

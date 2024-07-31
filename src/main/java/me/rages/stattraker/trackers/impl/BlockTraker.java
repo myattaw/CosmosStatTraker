@@ -1,8 +1,9 @@
-package me.rages.stattraker.trackers;
+package me.rages.stattraker.trackers.impl;
 
 import me.lucko.helper.item.ItemStackBuilder;
 import me.lucko.helper.text3.Text;
 import me.rages.stattraker.StatTrakPlugin;
+import me.rages.stattraker.trackers.Traker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemFlag;

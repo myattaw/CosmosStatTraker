@@ -15,7 +15,8 @@ import java.util.Set;
         name = "StatTrak",
         hardDepends = {"helper"},
         softDepends = {"Augments"},
-        apiVersion = "1.18"
+        apiVersion = "1.18",
+        foliaSupported = true
 )
 public final class StatTrakPlugin extends ExtendedJavaPlugin {
 
