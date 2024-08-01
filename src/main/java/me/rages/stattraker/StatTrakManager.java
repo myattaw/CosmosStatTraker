@@ -12,10 +12,7 @@ import me.lucko.helper.utils.Players;
 import me.rages.augments.AugmentType;
 import me.rages.augments.event.AugmentRewardEvent;
 import me.rages.stattraker.trackers.Traker;
-import me.rages.stattraker.trackers.impl.ArmorTraker;
-import me.rages.stattraker.trackers.impl.AugmentTraker;
-import me.rages.stattraker.trackers.impl.BlockTraker;
-import me.rages.stattraker.trackers.impl.EntityTraker;
+import me.rages.stattraker.trackers.impl.*;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
@@ -24,6 +21,7 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
@@ -52,6 +50,8 @@ public class StatTrakManager implements TerminableModule {
     private final Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
     private final Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
 
+    private ArrowShotTraker arrowShotTraker;
+
     private Set<Traker> trakersSet = new HashSet<>();
 
     private StatTrakPlugin plugin;
@@ -65,11 +65,13 @@ public class StatTrakManager implements TerminableModule {
 
         ArmorTraker armorHitsTraker = ArmorTraker.create(true, plugin);
         ArmorTraker armorDamageTraker = ArmorTraker.create(false, plugin);
-
         armorTrakerMap.put(armorHitsTraker.getKey(), armorHitsTraker);
         armorTrakerMap.put(armorDamageTraker.getKey(), armorDamageTraker);
         trakersSet.add(armorHitsTraker);
         trakersSet.add(armorDamageTraker);
+
+        this.arrowShotTraker = ArrowShotTraker.create(plugin);
+        trakersSet.add(this.arrowShotTraker);
 
         plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
                 .stream().map(EntityType::valueOf)
@@ -109,6 +111,8 @@ public class StatTrakManager implements TerminableModule {
                     return Optional.ofNullable(augmentTrakerMap.get(type.toUpperCase()));
                 } else if (armorTrakerMap.containsKey(type.toUpperCase())) {
                     return Optional.ofNullable(armorTrakerMap.get(type.toUpperCase()));
+                } else if (type.toUpperCase().equals("ARROWS_SHOT")) {
+                    return Optional.ofNullable(arrowShotTraker);
                 } else {
                     Material material = Material.valueOf(type.toUpperCase());
                     return Optional.ofNullable(blockTrakerMap.get(material));
@@ -223,6 +227,23 @@ public class StatTrakManager implements TerminableModule {
 
         }).registerAndBind(consumer, "randomtraker", "randomtracker", "rndtraker");
 
+        Events.subscribe(EntityShootBowEvent.class)
+                .filter(event -> event.getEntity() instanceof Player)
+                .handler(event -> {
+                    Player player = (Player) event.getEntity();
+                    ItemStack itemStack = player.getInventory().getItem(event.getHand());
+                    if (itemStack != null) {
+                        ArrowShotTraker arrowShotTraker = this.arrowShotTraker;
+                        if (arrowShotTraker != null && itemStack.hasItemMeta()
+                                && itemStack.getItemMeta().getPersistentDataContainer().has(arrowShotTraker.getItemKey())) {
+                            player.getInventory().setItem(
+                                    event.getHand(),
+                                    arrowShotTraker.incrementLore(itemStack, 1)
+                            );
+                        }
+                    }
+                }).bindWith(consumer);
+
         EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
         Events.subscribe(EntityDamageByEntityEvent.class)
                 .filter(event -> event.getEntity() instanceof Player)
@@ -257,6 +278,8 @@ public class StatTrakManager implements TerminableModule {
                                 traker = augmentTrakerMap.get(data);
                             } else if (armorTrakerMap.containsKey(data)) {
                                 traker = armorTrakerMap.get(data);
+                            } else if (data.equalsIgnoreCase("ARROWS_SHOT")) {
+                                traker = arrowShotTraker;
                             } else {
                                 Material material = Material.valueOf(data);
                                 if (material != null) traker = blockTrakerMap.get(material);

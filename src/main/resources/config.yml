@@ -104,4 +104,12 @@ stat-trak-blocks:
     items:
       - DIAMOND_PICKAXE
 
-
+stat-trak-arrows-shot:
+  item-name: "&7[&d&lARROWS SHOT&7]"
+  item-lore:
+    - "&7Click this item on top of a weapon to start tracking stats."
+    - ""
+    - "&f&lValid Items:"
+    - "&7- Crossbow"
+    - "&7- Bow"
+  trak-lore: "&dArrows shot: &f%amount%"
