@@ -15,6 +15,7 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.logging.Level;
 
 /**
  * @author : Michael
@@ -22,19 +23,23 @@ import java.util.List;
  **/
 public class EntityTraker extends Traker {
 
-    public EntityTraker(EntityType entityType, StatTrakPlugin plugin) {
+    public EntityTraker(String entityType, StatTrakPlugin plugin) {
+        if (!plugin.getConfig().contains("stat-trak-entities." + entityType + ".item-name")) {
+            plugin.getLogger().log(Level.WARNING, String.format("Could not find %s in config", entityType));
+        }
+
         ItemStackBuilder builder = ItemStackBuilder.of(Material.NAME_TAG)
-                .name(plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".item-name"))
-                .lore(plugin.getConfig().getStringList("stat-trak-entities." + entityType.name() + ".item-lore"))
-                .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, entityType.name()));
+                .name(plugin.getConfig().getString("stat-trak-entities." + entityType + ".item-name"))
+                .lore(plugin.getConfig().getStringList("stat-trak-entities." + entityType + ".item-lore"))
+                .transformMeta(itemMeta -> itemMeta.getPersistentDataContainer().set(plugin.getStatTrakItemKey(), PersistentDataType.STRING, entityType));
 
         setItemStack(builder.build());
-        setItemKey(new NamespacedKey(plugin, entityType.name()));
-        setDataLore(plugin.getConfig().getString("stat-trak-entities." + entityType.name() + ".trak-lore"));
+        setItemKey(new NamespacedKey(plugin, entityType));
+        setDataLore(plugin.getConfig().getString("stat-trak-entities." + entityType + ".trak-lore"));
         setPrefixLore(Text.colorize(getDataLore().split("%amount%")[0]));
     }
 
-    public static EntityTraker create(EntityType entityType, StatTrakPlugin plugin) {
+    public static EntityTraker create(String entityType, StatTrakPlugin plugin) {
         return new EntityTraker(entityType, plugin);
     }
 

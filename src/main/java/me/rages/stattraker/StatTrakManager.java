@@ -1,5 +1,6 @@
 package me.rages.stattraker;
 
+import com.google.common.collect.ImmutableMap;
 import me.lucko.helper.Commands;
 import me.lucko.helper.Events;
 import me.lucko.helper.Schedulers;
@@ -13,6 +14,7 @@ import me.rages.augments.AugmentType;
 import me.rages.augments.event.AugmentRewardEvent;
 import me.rages.stattraker.trackers.Traker;
 import me.rages.stattraker.trackers.impl.*;
+import org.apache.commons.lang3.EnumUtils;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
@@ -38,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
+import java.util.logging.Level;
 
 /**
  * @author : Michael
@@ -58,6 +61,11 @@ public class StatTrakManager implements TerminableModule {
 
     private boolean returnTrakerItem;
 
+    private final static ImmutableMap<String, String> OLD_ENTITY_NAMES = ImmutableMap.of(
+            "SNOWMAN", "SNOW_GOLEM"
+    );
+
+
     public StatTrakManager(StatTrakPlugin plugin) {
         this.plugin = plugin;
 
@@ -73,14 +81,23 @@ public class StatTrakManager implements TerminableModule {
         this.arrowShotTraker = ArrowShotTraker.create(plugin);
         trakersSet.add(this.arrowShotTraker);
 
-        plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)
-                .stream().map(EntityType::valueOf)
-                .filter(Objects::nonNull)
-                .forEach(entityType -> {
-                    EntityTraker entityTraker = EntityTraker.create(entityType, plugin);
-                    entityTrakerMap.put(entityType.name(), entityTraker);
+        for (String s : plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)) {
+            if (EnumUtils.isValidEnum(EntityType.class, s)) {
+                EntityType entityType = EntityType.valueOf(s);
+                EntityTraker entityTraker = EntityTraker.create(s, plugin);
+                entityTrakerMap.put(entityType.name(), entityTraker);
+                trakersSet.add(entityTraker);
+            } else {
+                String convertedName = OLD_ENTITY_NAMES.getOrDefault(s, s);
+                if (EnumUtils.isValidEnum(EntityType.class, convertedName)) {
+                    EntityTraker entityTraker = EntityTraker.create(s, plugin);
+                    entityTrakerMap.put(s, entityTraker);
                     trakersSet.add(entityTraker);
-                });
+                } else {
+                    plugin.getLogger().log(Level.INFO, s + " is not a valid entity type.");
+                }
+            }
+        }
 
         plugin.getConfig().getConfigurationSection("stat-trak-augments").getKeys(false)
                 .stream().map(AugmentType::valueOf)
