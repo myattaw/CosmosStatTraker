@@ -1,5 +1,7 @@
 package me.rages.stattraker;
 
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 import com.google.common.collect.ImmutableMap;
 import me.lucko.helper.Commands;
 import me.lucko.helper.Events;
@@ -61,10 +63,12 @@ public class StatTrakManager implements TerminableModule {
 
     private boolean returnTrakerItem;
 
-    private final static ImmutableMap<String, String> OLD_ENTITY_NAMES = ImmutableMap.of(
-            "SNOWMAN", "SNOW_GOLEM"
-    );
+    public static final BiMap<String, String> OLD_ENTITY_NAMES;
 
+    static {
+        OLD_ENTITY_NAMES = HashBiMap.create();
+        OLD_ENTITY_NAMES.put("SNOWMAN", "SNOW_GOLEM");
+    }
 
     public StatTrakManager(StatTrakPlugin plugin) {
         this.plugin = plugin;
@@ -363,7 +367,15 @@ public class StatTrakManager implements TerminableModule {
                 .handler(event -> {
                     Player player = event.getEntity().getKiller();
                     ItemStack itemStack = player.getInventory().getItemInMainHand();
-                    EntityTraker entityTraker = entityTrakerMap.get(event.getEntity().getType().name());
+                    EntityType type = event.getEntity().getType();
+                    EntityTraker entityTraker = entityTrakerMap.get(type.name());
+                    if (entityTraker == null) {
+                        entityTraker = entityTrakerMap.get(OLD_ENTITY_NAMES.inverse().getOrDefault(
+                                type.name(),
+                                type.name())
+                        );
+                    }
+
                     if (entityTraker != null && itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
 //                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
                         UUID playerId = player.getUniqueId();
