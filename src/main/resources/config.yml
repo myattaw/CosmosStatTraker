@@ -1,3 +1,6 @@
+settings:
+  use-slayer-trackers: true
+
 messages:
   traker-removed: "&d&lCOSMIC &8&l▶ &7You have removed tracker from item in hand."
   traker-received: "&d&lCOSMIC &8&l▶ &7You have received %amount%x Entity Trackers."
@@ -21,6 +24,14 @@ stat-trak-arrows-shot:
     - "&7- Crossbow"
     - "&7- Bow"
   trak-lore: "&dArrows shot: &f%amount%"
+
+stat-trak-bossmob:
+  item-name: "&7[&9&lBOSSMOB TRAKER &7]"
+  item-lore:
+    - "&7Click this item on top of a sword or axe to start tracking stats."
+  trak-lore: "&7Boss Mobs Killed: &f%amount%"
+  items:
+    - DIAMOND_SWORD
 
 stat-trak-armor:
   HITS_TAKEN:

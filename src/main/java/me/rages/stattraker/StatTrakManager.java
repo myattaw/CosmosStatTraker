@@ -2,7 +2,6 @@ package me.rages.stattraker;
 
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
-import com.google.common.collect.ImmutableMap;
 import me.lucko.helper.Commands;
 import me.lucko.helper.Events;
 import me.lucko.helper.Schedulers;
@@ -50,6 +49,7 @@ import java.util.logging.Level;
  **/
 public class StatTrakManager implements TerminableModule {
 
+    // convert this into an object later <trackerId, trackerObj>
     private final Map<String, ArmorTraker> armorTrakerMap = new HashMap<>();
     private final Map<String, EntityTraker> entityTrakerMap = new HashMap<>();
     private final Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
@@ -64,6 +64,10 @@ public class StatTrakManager implements TerminableModule {
     private boolean returnTrakerItem;
 
     public static final BiMap<String, String> OLD_ENTITY_NAMES;
+
+    private NamespacedKey slayerBossKey;
+    private BossMobTraker bossMobTraker;
+
 
     static {
         OLD_ENTITY_NAMES = HashBiMap.create();
@@ -85,7 +89,14 @@ public class StatTrakManager implements TerminableModule {
         this.arrowShotTraker = ArrowShotTraker.create(plugin);
         trakersSet.add(this.arrowShotTraker);
 
-        for (String s : plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false)) {
+        boolean usingSlayer = plugin.getConfig().getBoolean("settings.use-slayer-trackers");
+        if (usingSlayer) {
+            slayerBossKey = new NamespacedKey("slayer", "slayer_mob");
+            this.bossMobTraker = BossMobTraker.create(plugin);
+            trakersSet.add(bossMobTraker);
+        }
+
+        plugin.getConfig().getConfigurationSection("stat-trak-entities").getKeys(false).forEach(s -> {
             if (EnumUtils.isValidEnum(EntityType.class, s)) {
                 EntityType entityType = EntityType.valueOf(s);
                 EntityTraker entityTraker = EntityTraker.create(s, plugin);
@@ -101,7 +112,7 @@ public class StatTrakManager implements TerminableModule {
                     plugin.getLogger().log(Level.INFO, s + " is not a valid entity type.");
                 }
             }
-        }
+        });
 
         plugin.getConfig().getConfigurationSection("stat-trak-augments").getKeys(false)
                 .stream().map(AugmentType::valueOf)
@@ -125,6 +136,10 @@ public class StatTrakManager implements TerminableModule {
 
         Commands.parserRegistry().register(Traker.class, type -> {
             try {
+                if (slayerBossKey != null && type.equalsIgnoreCase("BOSSMOB")) {
+                    return Optional.ofNullable(bossMobTraker);
+                }
+
                 EntityTraker entityTraker = entityTrakerMap.get(type.toUpperCase());
                 if (entityTraker != null) {
                     return Optional.ofNullable(entityTrakerMap.get(type.toUpperCase()));
@@ -293,7 +308,10 @@ public class StatTrakManager implements TerminableModule {
 
                             Traker traker = null;
                             String data = container.get(plugin.getStatTrakItemKey(), PersistentDataType.STRING).toUpperCase();
-                            if (entityTrakerMap.containsKey(data)) {
+
+                            if (data.equals("BOSSMOB")) {
+                                traker = bossMobTraker;
+                            } else if (entityTrakerMap.containsKey(data)) {
                                 traker = entityTrakerMap.get(data);
                             } else if (augmentTrakerMap.containsKey(data)) {
                                 traker = augmentTrakerMap.get(data);
@@ -368,6 +386,14 @@ public class StatTrakManager implements TerminableModule {
                     Player player = event.getEntity().getKiller();
                     ItemStack itemStack = player.getInventory().getItemInMainHand();
                     EntityType type = event.getEntity().getType();
+
+                    if (slayerBossKey != null) {
+                        if (event.getEntity().getPersistentDataContainer().has(slayerBossKey) &&
+                                itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(bossMobTraker.getItemKey())) {
+                            player.getInventory().setItemInMainHand(bossMobTraker.incrementLore(itemStack, 1));
+                        }
+                    }
+
                     EntityTraker entityTraker = entityTrakerMap.get(type.name());
                     if (entityTraker == null) {
                         entityTraker = entityTrakerMap.get(OLD_ENTITY_NAMES.inverse().getOrDefault(
@@ -483,6 +509,10 @@ public class StatTrakManager implements TerminableModule {
 
                 Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
 
+                if (key.equals(bossMobTraker.getItemKey())) {
+                    traker = bossMobTraker;
+                }
+
                 if (traker == null && augmentTrakerMap.containsKey(key.getKey().toUpperCase())) {
                     traker = augmentTrakerMap.get(key.getKey().toUpperCase());
                 }
@@ -490,6 +520,7 @@ public class StatTrakManager implements TerminableModule {
                 if (traker == null) {
                     traker = blockTrakerMap.get(Material.valueOf(key.getKey().toUpperCase()));
                 }
+
 
                 if (traker == null) {
                     return null;
