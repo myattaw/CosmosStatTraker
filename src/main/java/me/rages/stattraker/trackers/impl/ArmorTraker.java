@@ -21,7 +21,9 @@ public class ArmorTraker extends Traker {
                     Material.NETHERITE_HELMET, Material.NETHERITE_CHESTPLATE,
                     Material.NETHERITE_LEGGINGS, Material.NETHERITE_BOOTS,
                     Material.DIAMOND_HELMET, Material.DIAMOND_CHESTPLATE,
-                    Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS
+                    Material.DIAMOND_LEGGINGS, Material.DIAMOND_BOOTS,
+                    Material.LEATHER_HELMET, Material.LEATHER_CHESTPLATE,
+                    Material.LEATHER_LEGGINGS, Material.LEATHER_BOOTS
             )
             .build();
 

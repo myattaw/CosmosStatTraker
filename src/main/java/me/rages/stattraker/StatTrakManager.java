@@ -513,6 +513,10 @@ public class StatTrakManager implements TerminableModule {
                     traker = bossMobTraker;
                 }
 
+                if (traker == null && armorTrakerMap.containsKey(key.getKey().toUpperCase())) {
+                    traker = armorTrakerMap.get(key.getKey().toUpperCase());
+                }
+
                 if (traker == null && augmentTrakerMap.containsKey(key.getKey().toUpperCase())) {
                     traker = augmentTrakerMap.get(key.getKey().toUpperCase());
                 }
