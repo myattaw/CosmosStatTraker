@@ -91,7 +91,7 @@ public class StatTrakManager implements TerminableModule {
 
         boolean usingSlayer = plugin.getConfig().getBoolean("settings.use-slayer-trackers");
         if (usingSlayer) {
-            slayerBossKey = new NamespacedKey("slayer", "slayer_mob");
+            slayerBossKey = new NamespacedKey("slayer", "boss_mob");
             this.bossMobTraker = BossMobTraker.create(plugin);
             trakersSet.add(bossMobTraker);
         }
