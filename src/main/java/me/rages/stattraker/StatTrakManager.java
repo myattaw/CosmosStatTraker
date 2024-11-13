@@ -56,6 +56,8 @@ public class StatTrakManager implements TerminableModule {
     private final Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
 
     private final EntityTraker stackerTracker;
+    private final FishTraker fishStreakTraker;
+
 
     private ArrowShotTraker arrowShotTraker;
 
@@ -80,6 +82,7 @@ public class StatTrakManager implements TerminableModule {
         this.plugin = plugin;
         this.returnTrakerItem = plugin.getConfig().getBoolean("stack-trak-remover.return-traker", true);
         this.stackerTracker = EntityTraker.create("STACKER", plugin);
+        this.fishStreakTraker = FishTraker.create(plugin);
 
 
         ArmorTraker armorHitsTraker = ArmorTraker.create(true, plugin);
@@ -489,7 +492,7 @@ public class StatTrakManager implements TerminableModule {
     }
 
     private void applyEntityTracker(Map<UUID, Long> cooldownMap, Player player, ItemStack itemStack, EntityTraker entityTraker) {
-        if (entityTraker != null  && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
+        if (entityTraker != null && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
 //                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
             UUID playerId = player.getUniqueId();
             long currentTime = System.currentTimeMillis();
