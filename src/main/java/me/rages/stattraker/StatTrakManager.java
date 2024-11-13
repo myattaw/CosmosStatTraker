@@ -55,6 +55,8 @@ public class StatTrakManager implements TerminableModule {
     private final Map<String, AugmentTraker> augmentTrakerMap = new HashMap<>();
     private final Map<Material, BlockTraker> blockTrakerMap = new HashMap<>();
 
+    private final EntityTraker stackerTracker;
+
     private ArrowShotTraker arrowShotTraker;
 
     private Set<Traker> trakersSet = new HashSet<>();
@@ -76,8 +78,9 @@ public class StatTrakManager implements TerminableModule {
 
     public StatTrakManager(StatTrakPlugin plugin) {
         this.plugin = plugin;
-
         this.returnTrakerItem = plugin.getConfig().getBoolean("stack-trak-remover.return-traker", true);
+        this.stackerTracker = EntityTraker.create("STACKER", plugin);
+
 
         ArmorTraker armorHitsTraker = ArmorTraker.create(true, plugin);
         ArmorTraker armorDamageTraker = ArmorTraker.create(false, plugin);
@@ -372,9 +375,12 @@ public class StatTrakManager implements TerminableModule {
                     Player player = event.getEntity().getKiller();
                     ItemStack itemStack = player.getInventory().getItemInMainHand();
                     EntityTraker entityTraker = entityTrakerMap.get(event.getEntity().getType().name());
-                    if (entityTraker != null && itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
-                        player.getInventory().setItemInMainHand(entityTraker.incrementPlayerLore(itemStack, 1));
+                    if (itemStack.hasItemMeta()) {
+                        if (entityTraker != null && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
+                            player.getInventory().setItemInMainHand(entityTraker.incrementPlayerLore(itemStack, 1));
+                        }
                     }
+
                 }).bindWith(consumer);
 
         // Declare a map to store player UUIDs and their last usage time
@@ -402,19 +408,9 @@ public class StatTrakManager implements TerminableModule {
                         );
                     }
 
-                    if (entityTraker != null && itemStack.hasItemMeta() && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
-//                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
-                        UUID playerId = player.getUniqueId();
-                        long currentTime = System.currentTimeMillis();
-                        long cooldownTime = cooldownMap.getOrDefault(playerId, 0L);
-
-                        // Check if the player is still on cooldown
-                        if (currentTime - cooldownTime >= 1000) {
-                            // Update the cooldown time for the player
-                            cooldownMap.put(playerId, currentTime);
-                            // Perform the action (setting the item in the player's main hand)
-                            player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
-                        }
+                    if (itemStack.hasItemMeta()) {
+                        applyEntityTracker(cooldownMap, player, itemStack, stackerTracker);
+                        applyEntityTracker(cooldownMap, player, itemStack, entityTraker);
                     }
                 }).bindWith(consumer);
 
@@ -490,6 +486,23 @@ public class StatTrakManager implements TerminableModule {
             }
         }, 15L, TimeUnit.SECONDS, 15L, TimeUnit.SECONDS).bindWith(consumer);
 
+    }
+
+    private void applyEntityTracker(Map<UUID, Long> cooldownMap, Player player, ItemStack itemStack, EntityTraker entityTraker) {
+        if (entityTraker != null  && itemStack.getItemMeta().getPersistentDataContainer().has(entityTraker.getItemKey())) {
+//                        player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
+            UUID playerId = player.getUniqueId();
+            long currentTime = System.currentTimeMillis();
+            long cooldownTime = cooldownMap.getOrDefault(playerId, 0L);
+
+            // Check if the player is still on cooldown
+            if (currentTime - cooldownTime >= 1000) {
+                // Update the cooldown time for the player
+                cooldownMap.put(playerId, currentTime);
+                // Perform the action (setting the item in the player's main hand)
+                player.getInventory().setItemInMainHand(entityTraker.incrementLore(itemStack, 1));
+            }
+        }
     }
 
     private ItemStack addTrakerToItem(Traker traker, ItemStack itemStack) {
