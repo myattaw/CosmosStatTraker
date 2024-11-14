@@ -28,6 +28,7 @@ import org.bukkit.event.entity.EntityShootBowEvent;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.inventory.InventoryAction;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.player.PlayerFishEvent;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
@@ -269,6 +270,37 @@ public class StatTrakManager implements TerminableModule {
 
         }).registerAndBind(consumer, "randomtraker", "randomtracker", "rndtraker");
 
+        Map<UUID, Long> lastFishCaught = new HashMap<>();
+
+        Events.subscribe(PlayerFishEvent.class)
+                .filter(event -> event.getState() == PlayerFishEvent.State.CAUGHT_FISH)
+                .handler(event -> {
+                    Player player = event.getPlayer();
+                    UUID playerId = player.getUniqueId();
+                    ItemStack itemStack = player.getInventory().getItem(event.getHand());
+
+                    if (itemStack != null && fishStreakTraker != null && itemStack.hasItemMeta()
+                            && itemStack.getItemMeta().getPersistentDataContainer().has(fishStreakTraker.getItemKey())) {
+
+                        long currentTime = System.currentTimeMillis();
+
+                        // Check if the player has caught a fish before
+                        if (lastFishCaught.containsKey(playerId)) {
+                            long lastCaughtTime = lastFishCaught.get(playerId);
+                            // Check if last fish was caught within 30 seconds
+                            if (currentTime - lastCaughtTime < 30 * 1000) {
+                                player.getInventory().setItem(
+                                        event.getHand(),
+                                        fishStreakTraker.incrementLore(itemStack, 1)
+                                );
+                            }
+                        }
+
+                        // Update the last caught time to the current time
+                        lastFishCaught.put(playerId, currentTime);
+                    }
+                }).bindWith(consumer);
+
         Events.subscribe(EntityShootBowEvent.class)
                 .filter(event -> event.getEntity() instanceof Player)
                 .handler(event -> {
@@ -286,7 +318,7 @@ public class StatTrakManager implements TerminableModule {
                     }
                 }).bindWith(consumer);
 
-        EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET};
+        EquipmentSlot[] armorSlots = {EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS, EquipmentSlot.FEET, EquipmentSlot.HAND, EquipmentSlot.OFF_HAND};
         Events.subscribe(EntityDamageByEntityEvent.class)
                 .filter(event -> event.getEntity() instanceof Player)
                 .filter(event -> event.getDamager() instanceof Player)
