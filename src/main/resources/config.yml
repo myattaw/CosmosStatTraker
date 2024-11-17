@@ -33,6 +33,13 @@ stat-trak-bossmob:
   items:
     - DIAMOND_SWORD
 
+stat-trak-fish:
+  FISH_STREAK:
+    item-name: "&7[&9&lFISH STREAK TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+    trak-lore: "&7Fish Streaks: &f%amount%"
+
 stat-trak-armor:
   HITS_TAKEN:
     item-name: "&7[&9&lHITS TRAKER &7]"

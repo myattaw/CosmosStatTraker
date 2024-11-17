@@ -84,6 +84,8 @@ public class StatTrakManager implements TerminableModule {
         this.returnTrakerItem = plugin.getConfig().getBoolean("stack-trak-remover.return-traker", true);
         this.stackerTracker = EntityTraker.create("STACKER", plugin);
         this.fishStreakTraker = FishTraker.create(plugin);
+        trakersSet.add(this.stackerTracker);
+        trakersSet.add(this.fishStreakTraker);
 
 
         ArmorTraker armorHitsTraker = ArmorTraker.create(true, plugin);
@@ -154,6 +156,10 @@ public class StatTrakManager implements TerminableModule {
                     return Optional.ofNullable(augmentTrakerMap.get(type.toUpperCase()));
                 } else if (armorTrakerMap.containsKey(type.toUpperCase())) {
                     return Optional.ofNullable(armorTrakerMap.get(type.toUpperCase()));
+                } else if (type.toUpperCase().equals("FISH_STREAK")) {
+                    return Optional.ofNullable(fishStreakTraker);
+                } else if (type.toUpperCase().equals("STACKER")) {
+                    return Optional.ofNullable(stackerTracker);
                 } else if (type.toUpperCase().equals("ARROWS_SHOT")) {
                     return Optional.ofNullable(arrowShotTraker);
                 } else {
@@ -357,6 +363,10 @@ public class StatTrakManager implements TerminableModule {
                                 traker = armorTrakerMap.get(data);
                             } else if (data.equalsIgnoreCase("ARROWS_SHOT")) {
                                 traker = arrowShotTraker;
+                            } else if (data.equalsIgnoreCase("FISH_STREAK")) {
+                                traker = fishStreakTraker;
+                            } else if (data.equalsIgnoreCase("STACKER")) {
+                                traker = stackerTracker;
                             } else {
                                 Material material = Material.valueOf(data);
                                 if (material != null) traker = blockTrakerMap.get(material);
