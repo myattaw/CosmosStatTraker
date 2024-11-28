@@ -571,6 +571,14 @@ public class StatTrakManager implements TerminableModule {
                     traker = bossMobTraker;
                 }
 
+                if (key.equals(stackerTracker.getItemKey())) {
+                    traker = stackerTracker;
+                }
+
+                if (key.equals(fishStreakTraker.getItemKey())) {
+                    traker = fishStreakTraker;
+                }
+
                 if (traker == null && armorTrakerMap.containsKey(key.getKey().toUpperCase())) {
                     traker = armorTrakerMap.get(key.getKey().toUpperCase());
                 }
