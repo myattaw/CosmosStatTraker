@@ -6,7 +6,6 @@ import me.rages.stattraker.StatTrakPlugin;
 import me.rages.stattraker.trackers.Traker;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.EntityType;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -15,7 +14,6 @@ import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.logging.Level;
 
 /**
@@ -28,7 +26,6 @@ public class EntityTraker extends Traker {
         if (!plugin.getConfig().contains("stat-trak-entities." + entityType + ".item-name")) {
             plugin.getLogger().log(Level.WARNING, String.format("Could not find %s in config", entityType));
         }
-
         ItemStackBuilder builder = ItemStackBuilder.of(Material.NAME_TAG)
                 .name(plugin.getConfig().getString("stat-trak-entities." + entityType + ".item-name"))
                 .lore(plugin.getConfig().getStringList("stat-trak-entities." + entityType + ".item-lore"))

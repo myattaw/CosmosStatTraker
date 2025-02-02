@@ -16,6 +16,7 @@ import me.rages.augments.event.AugmentRewardEvent;
 import me.rages.stattraker.trackers.Traker;
 import me.rages.stattraker.trackers.impl.*;
 import org.apache.commons.lang3.EnumUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.EntityType;
@@ -551,78 +552,97 @@ public class StatTrakManager implements TerminableModule {
     }
 
     private ItemStack addTrakerToItem(Traker traker, ItemStack itemStack) {
-        return ItemStackBuilder.of(itemStack)
-                .transformMeta(meta -> meta.getPersistentDataContainer().set(traker.getItemKey(), PersistentDataType.INTEGER, 0))
-                .lore(traker.getDataLore().replace("%amount%", "0"))
-                .unflag(ItemFlag.HIDE_ENCHANTS)
-                .build();
+        // Clone the original ItemStack to avoid modifying it directly
+        ItemStack newItem = itemStack.clone();
+
+        // Initialize or get the existing lore from the item
+        List<String> lore = new ArrayList<>();
+        if (newItem.hasItemMeta() && newItem.getItemMeta().hasLore()) {
+            lore = new ArrayList<>(newItem.getItemMeta().getLore()); // Ensure it's mutable
+        }
+
+        // Add the new lore entry
+        lore.add(Text.colorize(traker.getDataLore().replace("%amount%", "0")));
+        ItemMeta itemMeta = newItem.hasItemMeta() ? newItem.getItemMeta() : Bukkit.getItemFactory().getItemMeta(newItem.getType());
+
+        // Modify the item's meta
+
+        if (itemMeta != null) {
+            itemMeta.setLore(lore);
+            itemMeta.getPersistentDataContainer().set(traker.getItemKey(), PersistentDataType.INTEGER, 0);
+            newItem.setItemMeta(itemMeta);
+        }
+
+        return newItem;
     }
 
     private ItemStack removeTrakerFromItem(Player player, ItemStack itemStack) {
-        if (itemStack.hasItemMeta()) {
-            PersistentDataContainer persistentDataContainer = itemStack.getItemMeta().getPersistentDataContainer();
-            for (NamespacedKey key : persistentDataContainer.getKeys()) {
-
-                if (!StatTrakPlugin.TRACKER_KEYS.contains(key)) continue;
-
-                Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
-
-                if (key.equals(bossMobTraker.getItemKey())) {
-                    traker = bossMobTraker;
-                }
-
-                if (key.equals(stackerTracker.getItemKey())) {
-                    traker = stackerTracker;
-                }
-
-                if (key.equals(fishStreakTraker.getItemKey())) {
-                    traker = fishStreakTraker;
-                }
-
-                if (traker == null && armorTrakerMap.containsKey(key.getKey().toUpperCase())) {
-                    traker = armorTrakerMap.get(key.getKey().toUpperCase());
-                }
-
-                if (traker == null && augmentTrakerMap.containsKey(key.getKey().toUpperCase())) {
-                    traker = augmentTrakerMap.get(key.getKey().toUpperCase());
-                }
-
-                if (traker == null) {
-                    traker = blockTrakerMap.get(Material.valueOf(key.getKey().toUpperCase()));
-                }
-
-
-                if (traker == null) {
-                    return null;
-                }
-
-                List<String> oldLore = itemStack.getLore();
-
-                ItemStackBuilder builder = ItemStackBuilder.of(itemStack).transformMeta(itemMeta ->
-                        itemMeta.getPersistentDataContainer().remove(key)
-                );
-                builder.clearLore();
-                if (traker != null) {
-                    for (String lore : oldLore) {
-                        if (!lore.startsWith(traker.getPrefixLore())) {
-                            builder.lore(lore);
-                        }
-                    }
-                    itemStack.removeItemFlags(ItemFlag.HIDE_ENCHANTS);
-
-                    if (returnTrakerItem) {
-                        Map<Integer, ItemStack> leftOvers = player.getInventory().addItem(traker.getItemStack());
-                        if (!leftOvers.isEmpty()) {
-                            leftOvers.values().forEach(item -> player.getWorld().dropItem(player.getLocation(), item));
-                        }
-                    }
-
-                    return builder.build();
-                }
-
-            }
+        if (itemStack == null || !itemStack.hasItemMeta()) {
+            return null; // Return early if itemStack is null or has no meta
         }
-        return null;
+
+        ItemMeta itemMeta = itemStack.getItemMeta();
+        PersistentDataContainer persistentDataContainer = itemMeta.getPersistentDataContainer();
+
+        for (NamespacedKey key : persistentDataContainer.getKeys()) {
+            if (!StatTrakPlugin.TRACKER_KEYS.contains(key)) continue;
+
+            Traker traker = entityTrakerMap.get(key.getKey().toUpperCase());
+
+            if (key.equals(bossMobTraker.getItemKey())) {
+                traker = bossMobTraker;
+            } else if (key.equals(stackerTracker.getItemKey())) {
+                traker = stackerTracker;
+            } else if (key.equals(fishStreakTraker.getItemKey())) {
+                traker = fishStreakTraker;
+            } else if (traker == null && armorTrakerMap.containsKey(key.getKey().toUpperCase())) {
+                traker = armorTrakerMap.get(key.getKey().toUpperCase());
+            } else if (traker == null && augmentTrakerMap.containsKey(key.getKey().toUpperCase())) {
+                traker = augmentTrakerMap.get(key.getKey().toUpperCase());
+            } else if (traker == null) {
+                try {
+                    Material material = Material.valueOf(key.getKey().toUpperCase());
+                    traker = blockTrakerMap.get(material);
+                } catch (IllegalArgumentException e) {
+                    // Ignore invalid material keys
+                }
+            }
+
+            if (traker == null) {
+                return null; // If no tracker is found, return null
+            }
+
+            // Remove the tracker key from the persistent data container
+            persistentDataContainer.remove(key);
+
+            // Update the item's lore by removing the tracker-specific lore
+            List<String> oldLore = itemMeta.hasLore() ? itemMeta.getLore() : new ArrayList<>();
+            List<String> updatedLore = new ArrayList<>();
+            for (String lore : oldLore) {
+                if (!lore.startsWith(traker.getPrefixLore())) {
+                    updatedLore.add(lore);
+                }
+            }
+
+            // Set the updated lore and remove enchant flags
+            itemMeta.setLore(updatedLore);
+            itemMeta.removeItemFlags(ItemFlag.HIDE_ENCHANTS);
+
+            // Update the item's meta
+            itemStack.setItemMeta(itemMeta);
+
+            // Optionally return the tracker item to the player's inventory
+            if (returnTrakerItem) {
+                Map<Integer, ItemStack> leftOvers = player.getInventory().addItem(traker.getItemStack());
+                if (!leftOvers.isEmpty()) {
+                    leftOvers.values().forEach(item -> player.getWorld().dropItem(player.getLocation(), item));
+                }
+            }
+
+            return itemStack; // Return the updated item after processing
+        }
+
+        return null; // If no tracker was removed, return null
     }
 
 }

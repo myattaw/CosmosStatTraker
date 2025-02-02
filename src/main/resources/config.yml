@@ -56,6 +56,11 @@ stat-trak-armor:
 # https://hub.spigotmc.org/javadocs/bukkit/org/bukkit/entity/EntityType.html
 # DO NOT MAKE DIFFERENT TRAKER ITEMS SHARE THE SAME 'TRAK-LORE'
 stat-trak-entities:
+  STACKER:
+    item-name: "&7[&b&lSTACKER TRAKER &7]"
+    item-lore:
+      - "&7Click this item on top of a sword or axe to start tracking stats."
+    trak-lore: "&bStacked Mobs Killed: &f%amount%"
   ZOMBIE:
     item-name: "&7[&b&lZOMBIE TRAKER &7]"
     item-lore:
