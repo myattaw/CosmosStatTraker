@@ -455,8 +455,10 @@ public class StatTrakManager implements TerminableModule {
                     }
 
                     if (itemStack.hasItemMeta()) {
-                        applyEntityTracker(cooldownMap, player, itemStack, stackerTracker);
                         applyEntityTracker(cooldownMap, player, itemStack, entityTraker);
+                        if (stackerTracker != null && itemStack.getItemMeta().getPersistentDataContainer().has(stackerTracker.getItemKey())) {
+                            player.getInventory().setItemInMainHand(stackerTracker.incrementLore(itemStack, 1));
+                        }
                     }
                 }).bindWith(consumer);
 
